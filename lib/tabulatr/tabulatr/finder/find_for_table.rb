@@ -78,7 +78,7 @@ module Tabulatr::Finder
     precon = rel
     precon = precon.where(opts[:precondition]) if opts[:precondition].present?
     if checked_param[:select_all]
-      selected_ids = (typ==:ar ? precon.select(:id) : precon.only(:id) ).to_a.map { |r| r.send(id) }
+      selected_ids = (typ==:ar ? precon.all : precon.only(:id) ).to_a.map { |r| r.send(id) }
     elsif checked_param[:select_none]
       selected_ids = []
     elsif checked_param[:select_visible]
