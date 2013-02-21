@@ -51,7 +51,7 @@ class Tabulatr
           val = @record.send(opts[:method] || name)
           format = opts[:format]
           concat(
-            if format.is_a?(Proc) then format.call(val)
+            if format.is_a?(Proc) then format.call(val, @record)
             elsif format.is_a?(String) then h(format % val)
             elsif format.is_a?(Symbol) then Tabulatr::Formattr.format(format, val)
             elsif format.is_a?(Hash) then format[val]
@@ -85,25 +85,27 @@ class Tabulatr
       if opts[:sort_by]
         # TODO: SORTING specified by opts[:sort_by]
       end
-      concat(if (ass.is_a?(Array) || ass.respond_to?(:to_ary)) && opts[:map]
-        ass.map do |r|
-          val = h(r.send(opts[:method] || name))
-          if format.is_a?(Proc) then format.call(val)
-          elsif format.is_a?(String) then h(format % val)
-          elsif format.is_a?(Symbol) then Tabulatr::Formattr.format(format, val)
-          else h(val.to_s)
-          end
-        end.join(opts[:join_symbol])
-      else
-        return '' unless ass
-        #puts ass.to_s
-        val = h(ass.send(opts[:method] || name))
-        val = if format.is_a?(Proc) then format.call(val)
-        elsif format.is_a?(String) then h(format % val)
-        elsif format.is_a?(Symbol) then Tabulatr::Formattr.format(format, val)
-        else h(val.to_s)
-        end
-      end)
+      concat(
+        if block_given?
+          yield(@record)
+        elsif (ass.is_a?(Array) || ass.respond_to?(:to_ary)) && opts[:map]
+          ass.map do |r|
+            val = h(r.send(opts[:method] || name))
+            if format.is_a?(Proc) then format.call(val, @record)
+            elsif format.is_a?(String) then h(format % val)
+            elsif format.is_a?(Symbol) then Tabulatr::Formattr.format(format, val)
+            else h(val.to_s)
+            end
+          end.join(opts[:join_symbol])
+        else
+          return '' unless ass
+          val = h(ass.send(opts[:method] || name))
+          val = if format.is_a?(Proc) then format.call(val, @record)
+                elsif format.is_a?(String) then h(format % val)
+                elsif format.is_a?(Symbol) then Tabulatr::Formattr.format(format, val)
+                else h(val.to_s)
+                end
+        end)
     end # </td>
   end
 
