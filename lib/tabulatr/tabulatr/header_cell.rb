@@ -35,27 +35,24 @@ class Tabulatr
     raise "Not in header mode!" if @row_mode != :header
     sortparam = "#{@classname}#{@table_form_options[:sort_postfix]}"
     bid = "#{@classname}#{@table_form_options[:sort_postfix]}"
-    opts = normalize_column_options opts
+    opts = normalize_column_options(name, opts)
     make_tag(:th, opts[:th_html]) do
-      concat(t(opts[:header] || name.to_s.humanize.titlecase), :escape_html)
+      concat(t(opts[:header] || @klaz.human_attribute_name(name).titlecase), :escape_html)
       if opts[:sortable] and @table_options[:sortable]
         if @sorting and @sorting[:by].to_s == name.to_s
           pname = "#{sortparam}[_resort][#{name}][#{@sorting[:direction] == 'asc' ? 'desc' : 'asc'}]"
           bid = "#{bid}_#{name}_#{@sorting[:direction] == 'asc' ? 'desc' : 'asc'}"
-          psrc = File.join(@table_options[:image_path_prefix], @table_options[@sorting[:direction] == 'desc' ?
-            :sort_down_button : :sort_up_button])
+          psrc = @table_options[@sorting[:direction] == 'desc' ?
+            :sort_down_button : :sort_up_button]
           make_tag(:input, :type => :hidden,
             :name => "#{sortparam}[#{name}][#{@sorting[:direction]}]",
             :value => "#{@sorting[:direction]}")
         else
           pname = "#{sortparam}[_resort][#{name}][desc]"
           bid = "#{bid}_#{name}_desc"
-          psrc = File.join(@table_options[:image_path_prefix], @table_options[:sort_down_button_inactive])
+          psrc = @table_options[:sort_down_button_inactive]
         end
-        make_tag(:input, :type => 'image',
-          :id => bid,
-          :src => psrc,
-          :name => pname)
+        make_image_button(psrc, :id => bid, :name => pname)
       end
     end # </th>
   end
@@ -69,7 +66,7 @@ class Tabulatr
   #                    otherwise, the capitalized name is used
   def header_association(relation, name, opts={}, &block)
     raise "Not in header mode!" if @row_mode != :header
-    opts = normalize_column_options opts
+    opts = normalize_column_options(name, opts)
     if opts[:sortable] and @table_options[:sortable]
       # change classes accordingly
     end
@@ -86,6 +83,7 @@ class Tabulatr
   end
 
   def header_action(opts={}, &block)
+    opts = normalize_column_options(:action_column, opts)
     make_tag(:th, opts[:th_html]) do
       concat(t(opts[:header] || ""), :escape_html)
     end

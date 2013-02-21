@@ -75,7 +75,7 @@ class Tabulatr
     :select_controls => [:select_all, :select_none, :select_visible, :unselect_visible,
                       :select_filtered, :unselect_filtered],
 
-    :image_path_prefix => '/images/tabulatr/',
+    :image_path_prefix => (Rails::version.to_f >= 3.1 ? 'tabulatr/' : '/images/tabulatr/'),
     :pager_left_button => 'pager_arrow_left.gif',
     :pager_left_button_inactive => 'pager_arrow_left_off.gif',
     :pager_right_button => 'pager_arrow_right.gif',
@@ -98,7 +98,8 @@ class Tabulatr
     :action => nil,                    # target action of the wrapping form if applicable
     :batch_actions => false,           # :name => value hash of batch action stuff
     :translate => false,               # call t() for all 'labels' and stuff, possible values are true/:translate or :localize
-    :row_classes => ['odd', 'even']    # class for the trs
+    :row_classes => ['odd', 'even'],   # class for the trs
+    :footer_content => false           # if given, add a <%= content_for <footer_content> %> before the </table>
   })
 
   # these settings are considered constant for the whole application, can not be overridden
@@ -163,7 +164,8 @@ class Tabulatr
     :default_pagesize => false,
     :precondition => false,
     :store_data => false,
-    :stateful => false
+    :stateful => false,
+    :name_mapping => nil
   })
 
   # Stupid hack
@@ -207,5 +209,16 @@ class Tabulatr
   end
   def sql_options(n=nil) self.class.sql_options(n) end
 
-
+  COLUMN_PRESETS = {}
+  def self.column_presets(n=nil)
+    COLUMN_PRESETS.merge!(n) if n
+    COLUMN_PRESETS
+  end
+  def column_presets(n=nil) self.class.column_presets(n) end
+  def column_preset_for(name)  
+    h = COLUMN_PRESETS[name.to_sym]
+    return {} unless h
+    return h if h.is_a? Hash
+    COLUMN_PRESETS[h] || {}
+  end
 end

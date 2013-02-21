@@ -42,6 +42,8 @@ class Tabulatr
   include ActionView::Helpers::FormOptionsHelper
   include ActionView::Helpers::TranslationHelper
   include ActionView::Helpers::RecordTagHelper
+#  include ActionView::Helpers::AssetTagHelper
+#  include Rails::Application::Configurable
 
   # Constructor of Tabulatr
   #
@@ -57,14 +59,30 @@ class Tabulatr
     @val = []
     @record = nil
     @row_mode = false
-    @classname, @id, @id_type = @records.__classinfo
-    @pagination = @records.__pagination
-    @filters = @records.__filters
-    @sorting = @records.__sorting
-    @checked = @records.__checked
-    @store_data = @records.__store_data
-    @stateful = @records.__stateful
-    @should_translate = @table_options[:translate]
+    if @records.respond_to? :__classinfo
+      @klaz, @classname, @id, @id_type = @records.__classinfo
+      @pagination = @records.__pagination
+      @filters = @records.__filters
+      @sorting = @records.__sorting
+      @checked = @records.__checked
+      @store_data = @records.__store_data
+      @stateful = @records.__stateful
+      @should_translate = @table_options[:translate]
+    else
+      @classname, @id, @id_type = nil
+      @klaz = @records.first.class
+      @pagination = { :page => 1, :pagesize => records.count, :count => records.count, :pages => 1,
+        :pagesizes => records.count, :total => records.count }
+      @table_options.merge!(
+        :paginate => false,                 # true to show paginator
+        :sortable => false,                 # true to allow sorting (can be specified for every sortable column)
+        :selectable => false,               # true to render "select all", "select none" and the like
+        :info_text => nil,
+        :filter => false
+      )
+      @store_data = []
+      @should_translate = @table_options[:translate]
+    end
   end
 
   # the actual table definition method. It takes an Array of records, a hash of
@@ -114,7 +132,7 @@ class Tabulatr
     when :hidden_submit then "IMPLEMENT ME!"
     when :submit then   make_tag(:input, :type => 'submit',
         :class => @table_options[:submit_class],
-        :value => t(@table_options[:submit_label]))
+        :value => t(@table_options[:submit_label])) if @records.respond_to?(:__classinfo)
     when :reset then   make_tag(:input, :type => 'submit',
         :class => @table_options[:reset_class],
         :name => "#{@classname}#{TABLE_FORM_OPTIONS[:reset_state_postfix]}",
@@ -147,6 +165,7 @@ class Tabulatr
       make_tag(:tbody) do
         render_table_rows(&block)
       end # </tbody>
+      content_for(@table_options[:footer_content]) if @table_options[:footer_content]
     end # </table>
   end
 
@@ -237,6 +256,26 @@ private
     end
     nil
   end
+
+  def make_image_button(iname, options)
+    inactive = options.delete(:inactive)
+    psrc = @view.image_path File.join(@table_options[:image_path_prefix], iname)
+    if !inactive
+      make_tag(:input,
+        options.merge(
+          :type => 'image',
+          :src => psrc
+        )
+      )
+    else
+      make_tag(:img, :src => psrc)
+    end
+  end
+  
+  def self.config(&block)
+    yield(self)
+  end
+  
 end
 
 Dir[File.join(File.dirname(__FILE__), "tabulatr", "*.rb")].each do |file|

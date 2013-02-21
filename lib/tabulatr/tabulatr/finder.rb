@@ -34,7 +34,7 @@ module Tabulatr::Finder
     elsif list.first.is_a?(Fixnum)
       IdStuffer.stuff(list)
     else
-      "GzB" + Base64.encode64s(
+      "GzB" + Base64.encode64(
         Zlib::Deflate.deflate(
           list.join(Tabulatr.table_form_options[:checked_separator])))
     end
@@ -65,52 +65,4 @@ module Tabulatr::Finder
     end
   end
 
-private
-
-  def self.class_to_param(klaz)
-    klaz.to_s.downcase.gsub("/","_")
-  end
-
-  def self.condition_from(rel, typ, n, v)
-    raise "SECURITY violation, field name is '#{n}'" unless /^[\d\w]+(\.[\d\w]+)?$/.match n
-    @like ||= Tabulatr.sql_options[:like]
-    if v.is_a?(String)
-      if v.present?
-        if typ == :ar
-          rel = rel.where(n => v) 
-        elsif typ == :mongoid 
-          nn = n.split('.').last
-          rel = rel.where(nn => v) 
-        else raise "Unknown db type '#{typ}'"
-        end
-      end
-    elsif v.is_a?(Hash)
-      if v[:like]
-        if v[:like].present?
-          if typ==:ar
-            rel = rel.where("#{n} #{@like} ?", "%#{v[:like]}%")
-          elsif typ==:mongoid
-            nn = n.split('.').last
-            rel = rel.where(nn => Regexp.new(v[:like]))
-          else
-            raise "Unknown db type '#{typ}'"
-          end
-        end
-      else
-        if typ==:ar
-          rel = rel.where("#{n} >= ?", "#{v[:from]}") if v[:from].present?
-          rel = rel.where("#{n} <= ?", "#{v[:to]}") if v[:to].present?
-        elsif typ==:mongoid
-          nn = n.split('.').last.to_sym
-          rel = rel.where(nn.gte => v[:from]) if v[:from].present?
-          rel = rel.where(nn.lte => v[:to]) if v[:to].present?
-        else
-          raise "Unknown db type '#{typ}'"
-        end
-      end
-    else
-      raise "Wrong filter type: #{v.class}"
-    end
-    rel
-  end
 end
