@@ -22,7 +22,7 @@ th {
 
 div.table-controls {
   font: 9pt Verdana;
-  width: 100%-10px;
+  width: 100%;
   border: 1px solid gray;
   padding:5px;
   margin-bottom: 10px;
@@ -61,7 +61,7 @@ div.table-controls input[type=submit] {
 }
 
 div.table-controls input[type=submit] {
-  background-image: asset-url("buttons_lite_background.png", "image");
+  background-image: asset-url("buttons_lite_background.png");
   background-color: #263849;
   border-color: #16222c;
   color: #efefef;
